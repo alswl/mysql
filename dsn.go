@@ -116,7 +116,7 @@ func (cfg *Config) FormatDSN() string {
 
 	// [username[:password]@]
 	if len(cfg.User) > 0 {
-		buf.WriteString(cfg.User)
+		buf.WriteString(url.QueryEscape(cfg.User))
 		if len(cfg.Passwd) > 0 {
 			buf.WriteByte(':')
 			buf.WriteString(cfg.Passwd)
@@ -359,8 +359,14 @@ func ParseDSN(dsn string) (cfg *Config, err error) {
 								break
 							}
 						}
-						cfg.User = dsn[:k]
 
+						// username may have encoded characters, try to decode
+						// them
+						user, err := url.QueryUnescape(dsn[:k])
+						if err != nil {
+							return nil, fmt.Errorf("invalid username: %v", err)
+						}
+						cfg.User = user
 						break
 					}
 				}
